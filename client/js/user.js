@@ -62,3 +62,47 @@ async function loadSnacks() {
     alert("Gagal load snack");
   }
 }
+
+// ---- Modal Detail Snack ----
+const modal = document.getElementById("modal");
+const mTitle = document.getElementById("mTitle");
+const mImg = document.getElementById("mImg");
+const mDesc = document.getElementById("mDesc");
+const mBrand = document.getElementById("mBrand");
+const mCountry = document.getElementById("mCountry");
+const mPrice = document.getElementById("mPrice");
+const mStock = document.getElementById("mStock");
+const closeModalBtn = document.getElementById("closeModal");
+
+closeModalBtn.onclick = () => modal.style.display = "none";
+
+// Fetch snack detail by ID
+async function showDetail(id) {
+  if (!apiKey) return;
+  try {
+    const res = await fetch(`${BASE}/api/snacks/${id}`, {
+      headers: { "x-api-key": apiKey },
+    });
+    const s = await res.json();
+    // Isi modal
+    mTitle.innerText = s.name;
+    mImg.src = `${BASE}/images/${s.image_url}`;
+    mImg.alt = s.name;
+    mDesc.innerText = s.description;
+    mBrand.innerText = "Brand: " + (s.brand || "-");
+    mCountry.innerText = "Country: " + (s.country || "-");
+    mPrice.innerText = "Harga: Rp " + s.price;
+    mStock.innerText = "Stock: " + s.stock;
+    // Tampilkan modal
+    modal.style.display = "flex";
+  } catch (err) {
+    console.error(err);
+    alert("Gagal load detail snack");
+  }
+}
+
+// Load snack langsung kalau apiKey sudah ada
+if (apiKey) {
+  apiKeySpan.innerText = apiKey;
+  loadSnacks();
+}
