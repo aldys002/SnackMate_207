@@ -13,13 +13,14 @@ button:hover { background:#b14a4a; }
 #content { padding:20px; }
 #apiSection { margin-bottom:20px; }
 #snackGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:15px; }
-.snack-card { background:#fff; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:10px; text-align:center; cursor:pointer; }
-.snack-card img { width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:5px; }
-.snack-card h4 { margin:5px 0; color:#d85c5c; font-size:1rem; }
+.snack-card { background:#fff; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:10px; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; }
+.snack-card img { width:100px; height:100px; object-fit:contain; border-radius:8px; margin-bottom:5px; }
+.snack-card h4 { margin:5px 0; color:#d85c5c; font-size:1rem; text-align:center; }
+
 /* Modal */
 #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; }
-#modalContent { background:#fff; padding:20px; border-radius:12px; width:300px; text-align:center; }
-#modalContent img { width:100%; border-radius:8px; margin-bottom:10px; }
+#modalContent { background:#fff; padding:20px; border-radius:12px; width:300px; max-width:90%; text-align:center; }
+#modalContent img { width:100%; height:auto; object-fit:contain; border-radius:8px; margin-bottom:10px; }
 #closeModal { margin-top:10px; padding:8px 12px; border:none; border-radius:8px; background:#d85c5c; color:#fff; cursor:pointer; }
 #closeModal:hover { background:#b14a4a; }
 </style>
@@ -28,7 +29,7 @@ button:hover { background:#b14a4a; }
 
 <header>
   <h1>SnackMate - User</h1>
-  <button onclick="logout()">Logout</button>
+  <button id="logoutBtn">Logout</button>
 </header>
 
 <div id="content">
@@ -40,20 +41,128 @@ button:hover { background:#b14a4a; }
   <div id="snackGrid"></div>
 </div>
 
-<!-- Modal Snack Detail -->
+<!-- Modal -->
 <div id="modal">
   <div id="modalContent">
     <h3 id="mTitle"></h3>
     <img id="mImg" src="" alt="">
     <p id="mDesc"></p>
-    <p id="mBrand"></p>
-    <p id="mCountry"></p>
-    <p id="mPrice"></p>
-    <p id="mStock"></p>
+    <p><strong>Brand:</strong> <span id="mBrand"></span></p>
+    <p><strong>Country:</strong> <span id="mCountry"></span></p>
+    <p><strong>Price:</strong> <span id="mPrice"></span></p>
+    <p><strong>Stock:</strong> <span id="mStock"></span></p>
     <button id="closeModal">Close</button>
   </div>
 </div>
 
-<script src="js/user.js"></script>
+<script>
+const BASE = "http://localhost:3000";
+let apiKey = localStorage.getItem("api_key");
+
+const generateBtn = document.getElementById("generateKey");
+const apiKeySpan = document.getElementById("apiKey");
+const snackGrid = document.getElementById("snackGrid");
+const logoutBtn = document.getElementById("logoutBtn");
+
+const modal = document.getElementById("modal");
+const mTitle = document.getElementById("mTitle");
+const mImg = document.getElementById("mImg");
+const mDesc = document.getElementById("mDesc");
+const mBrand = document.getElementById("mBrand");
+const mCountry = document.getElementById("mCountry");
+const mPrice = document.getElementById("mPrice");
+const mStock = document.getElementById("mStock");
+const closeModalBtn = document.getElementById("closeModal");
+
+const role = localStorage.getItem("role");
+if (!role || role !== "user") {
+  alert("Silakan login sebagai user");
+  window.location.href = "login.html";
+}
+
+// Logout
+logoutBtn.onclick = () => {
+  localStorage.clear();
+  window.location.href="login.html";
+};
+
+// Close modal
+closeModalBtn.onclick = () => modal.style.display = "none";
+
+// Generate API Key
+generateBtn.addEventListener("click", async () => {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch(`${BASE}/apikey/generate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (res.ok) {
+      apiKey = data.api_key;
+      localStorage.setItem("api_key", apiKey);
+      apiKeySpan.innerText = apiKey;
+      loadSnacks();
+    } else {
+      alert("Gagal generate API Key: " + data.message);
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Gagal generate API Key (network / server error)");
+  }
+});
+
+// Load snacks
+async function loadSnacks() {
+  if (!apiKey) return;
+  try {
+    const res = await fetch(`${BASE}/api/snacks`, {
+      headers: { "x-api-key": apiKey },
+    });
+    const snacks = await res.json();
+    snackGrid.innerHTML = "";
+    snacks.forEach(s => {
+      const card = document.createElement("div");
+      card.className = "snack-card";
+      card.innerHTML = `<img src="${BASE}/images/${s.image_url}" alt="${s.name}"><h4>${s.name}</h4>`;
+      card.onclick = () => showDetail(s.id);
+      snackGrid.appendChild(card);
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Gagal load snack");
+  }
+}
+
+// Show snack detail modal
+async function showDetail(id){
+  if(!apiKey) return;
+  try{
+    const res = await fetch(`${BASE}/api/snacks/${id}`, {
+      headers: { "x-api-key": apiKey }
+    });
+    const s = await res.json();
+    mTitle.innerText = s.name;
+    mImg.src = `${BASE}/images/${s.image_url}`;
+    mImg.alt = s.name;
+    mDesc.innerText = s.description;
+    mBrand.innerText = s.brand || "-";
+    mCountry.innerText = s.country || "-";
+    mPrice.innerText = "Rp " + s.price;
+    mStock.innerText = s.stock;
+    modal.style.display = "flex";
+  }catch(err){
+    console.error(err);
+    alert("Gagal load detail snack");
+  }
+}
+
+// Jika apiKey sudah ada, load snack otomatis
+if(apiKey){
+  apiKeySpan.innerText = apiKey;
+  loadSnacks();
+}
+</script>
+
 </body>
 </html>
