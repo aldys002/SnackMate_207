@@ -6,7 +6,7 @@
 <title>SnackMate</title>
 <style>
   body {
-    font-family: 'Noto Sans', sans-serif;
+    font-family: 'Poppins', sans-serif; 
     background: #fff8f0;
     margin: 0;
     padding: 0;
@@ -17,7 +17,7 @@
     padding: 50px 20px;
   }
   header h1 { color: #d85c5c; margin: 0; font-size: 2.5rem;}
-  header p { color: #555; margin: 5px 0; }
+  header p { color: #8b5e5e; margin: 5px 0; font-size:1.2rem;}
   nav { margin: 20px 0; }
   nav button {
     margin: 0 10px;
@@ -28,11 +28,12 @@
     color: #fff;
     cursor: pointer;
     font-size: 1rem;
+    font-weight: 500;
   }
   nav button:hover { background: #b14a4a; }
   .gallery { display:flex; justify-content:center; flex-wrap:wrap; gap:20px; padding:20px; }
   .gallery-item {
-    width: 200px;
+    width: 220px; /* lebih besar */
     text-align:center;
     border-radius:12px;
     overflow:hidden;
@@ -40,9 +41,24 @@
     transition: transform .2s;
     background:#fff;
     box-shadow:0 4px 8px rgba(0,0,0,0.1);
+    padding-bottom:15px;
   }
-  .gallery-item img { width:100%; height:150px; object-fit:cover; }
-  .gallery-item h3 { margin:10px 0; color:#d85c5c; font-size:1.1rem; }
+  .gallery-item img { 
+    width:100%; 
+    height:180px; 
+    object-fit:cover; 
+    border-radius:8px; 
+  }
+  .gallery-item h3 { 
+    margin:10px 0 5px 0; 
+    color:#d85c5c; 
+    font-size:1.2rem; 
+  }
+  .gallery-item p { 
+    font-size:0.95rem; 
+    color:#8b5e5e; 
+    margin: 0 10px 10px 10px; 
+  }
   .modal {
     display:none;
     position:fixed;
@@ -58,7 +74,7 @@
     width:300px;
     text-align:center;
   }
-  .modal-content img { width:100%; border-radius:8px; }
+  .modal-content img { width:100%; object-fit:contain; border-radius:8px; margin-bottom:10px; }
   .close-btn {
     margin-top:10px;
     padding:8px 16px;
@@ -67,6 +83,7 @@
     color:#fff;
     border-radius:8px;
     cursor:pointer;
+    font-weight:500;
   }
   .close-btn:hover { background:#b14a4a; }
 </style>
@@ -75,7 +92,7 @@
 
 <header>
   <h1>SnackMate</h1>
-  <p>Snack Import API Platform</p>
+  <p>Platform API untuk mengeksplorasi dan mengimpor snack favorit dengan mudah</p>
 </header>
 
 <nav>
@@ -84,17 +101,20 @@
 </nav>
 
 <section class="gallery">
-  <div class="gallery-item" onclick="openModal('snack1.jpg','Calbee Honey Butter')">
-    <img src="images/snack1.jpg" alt="">
-    <h3>Calbee Honey Butter</h3>
+  <div class="gallery-item" onclick="openModal('shopping1.jpg','Nikmati pengalaman SnackMate','Temukan berbagai snack dari seluruh dunia hanya di SnackMate.')">
+    <img src="http://localhost:3000/images/snack1.jpg" alt="">
+    <h3>Temukan Snack Favoritmu</h3>
+    <p>Platform mudah untuk menjelajahi snack baru dan lezat.</p>
   </div>
-  <div class="gallery-item" onclick="openModal('snack2.jpg','Kitkat Matcha')">
-    <img src="images/snack2.jpg" alt="">
-    <h3>Kitkat Matcha</h3>
+  <div class="gallery-item" onclick="openModal('shopping2.jpg','Belanja Dengan Cepat','Akses API kami untuk mengimpor snack langsung ke platformmu.')">
+    <img src="http://localhost:3000/images/snack2.jpg" alt="">
+    <h3>Belanja Lebih Cepat</h3>
+    <p>SnackMate memudahkan integrasi data snack melalui API.</p>
   </div>
-  <div class="gallery-item" onclick="openModal('snack3.jpg','Pepero Almond')">
-    <img src="images/snack3.jpg" alt="">
-    <h3>Pepero Almond</h3>
+  <div class="gallery-item" onclick="openModal('shopping3.jpg','SnackMate API','Katalog lengkap snack dengan deskripsi dan detail untuk developer.')">
+    <img src="http://localhost:3000/images/snack3.jpg" alt="">
+    <h3>SnackMate API</h3>
+    <p>Dapatkan data snack lengkap untuk aplikasi dan projekmu.</p>
   </div>
 </section>
 
@@ -108,10 +128,11 @@
 </div>
 
 <script>
-function openModal(img, title) {
+function openModal(img, title, desc) {
   document.getElementById('modal').style.display = 'flex';
   document.getElementById('modalImg').src = 'images/' + img;
   document.getElementById('modalTitle').innerText = title;
+  document.getElementById('modalDesc').innerText = desc;
 }
 function closeModal() { document.getElementById('modal').style.display = 'none'; }
 </script>
