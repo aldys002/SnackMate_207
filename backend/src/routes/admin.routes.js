@@ -1,12 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const snackController = require("../controllers/snack.controller");
-const adminController = require("../controllers/admin.controller"); // ✅ harus ada
-const authMiddleware = require("../middleware/auth.middleware");
+const adminController = require("../controllers/admin.controller"); 
+const { verifyToken } = require("../middleware/auth.middleware"); // ✅ Ubah bagian ini
 const adminMiddleware = require("../middleware/admin.middleware");
 
-// Semua route admin harus login + role admin
-router.use(authMiddleware);
+// Gunakan verifyToken, bukan authMiddleware yang undefined
+router.use(verifyToken); 
 router.use(adminMiddleware);
 
 // Users & API Keys

@@ -1,69 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SnackMate Admin Dashboard</title>
-<style>
-  body { 
-    font-family:'Noto Sans', sans-serif; 
-    margin:0; 
-    background:#fff8f0; /* biar tetep soft pink */
-  }
-
-  header { 
-    background:#ffe4e1; 
-    padding:20px; 
-    display:flex; 
-    justify-content:space-between; 
-    align-items:center; 
-  }
-  header h1 { color:#d85c5c; margin:0; }
-
-  nav button { 
-    margin:0 5px; padding:8px 12px; border:none; border-radius:8px; cursor:pointer; 
-    background:#d85c5c; color:#fff; 
-  }
-  nav button:hover { background:#b14a4a; }
-
-  #content { padding:20px; }
-
-  /* Form CRUD vertikal */
-  .form-group { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; }
-  .form-group input { width:100%; padding:8px; border-radius:8px; border:1px solid #ccc; }
-
-  /* Tombol tambah/update */
-  button.action { padding:10px; border:none; border-radius:8px; background:#d85c5c; color:#fff; cursor:pointer; font-size:1rem; }
-  button.action:hover { background:#b14a4a; }
-
-  /* Image gallery tetap rapi */
-  #imageGallery { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
-  #imageGallery img { width:80px; height:80px; object-fit:contain; border-radius:8px; cursor:pointer; border:1px solid #ccc; padding:2px; transition: transform 0.2s; }
-  #imageGallery img:hover { transform: scale(1.1); }
-
-  /* Snack list card vertikal */
-  #snackList { display:flex; flex-direction:column; gap:15px; margin-top:10px; }
-  .card { background:#fff; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:10px; text-align:center; display:flex; flex-direction:column; align-items:center; }
-  .card img { width:120px; height:120px; object-fit:contain; border-radius:8px; margin-bottom:8px; }
-  .card h4 { margin:5px 0; color:#d85c5c; font-size:1rem; }
-  .card p { margin:2px 0; font-size:0.9rem; color:#333; }
-  .card button { width:80%; margin-top:5px; padding:6px; font-size:0.85rem; }
-
-</style>
-
-
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnackMate Admin Dashboard</title>
+    <style>
+        body { font-family:'Noto Sans', sans-serif; margin:0; background:#fff8f0; }
+        header { background:#ffe4e1; padding:20px; display:flex; justify-content:space-between; align-items:center; }
+        header h1 { color:#d85c5c; margin:0; }
+        nav button { margin:0 5px; padding:8px 12px; border:none; border-radius:8px; cursor:pointer; background:#d85c5c; color:#fff; font-weight: bold; }
+        nav button:hover { background:#b14a4a; }
+        #content { padding:20px; }
+        .form-group { display:flex; flex-direction:column; gap:10px; margin-bottom:15px; max-width: 500px; }
+        .form-group input { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; box-sizing: border-box; }
+        button.action { padding:10px; border:none; border-radius:8px; background:#d85c5c; color:#fff; cursor:pointer; font-size:1rem; transition: 0.3s; }
+        button.action:hover { opacity: 0.8; }
+        #imageGallery { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:15px; }
+        #imageGallery img { width:80px; height:80px; object-fit:contain; border-radius:8px; cursor:pointer; border:1px solid #ccc; padding:2px; transition: 0.2s; }
+        #imageGallery img:hover { transform: scale(1.1); border-color: #d85c5c; }
+        .grid-container { display:flex; flex-wrap:wrap; gap:15px; margin-top:10px; }
+        .card { background:#fff; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); padding:15px; text-align:center; width: 220px; }
+        .card img { width:120px; height:120px; object-fit:contain; border-radius:8px; margin-bottom:8px; }
+        .api-card { width: 300px; text-align: left; position: relative; border-left: 5px solid #d85c5c; }
+        .token-badge { position: absolute; top: 15px; right: 15px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; color: #fff; font-weight: bold; }
+    </style>
 </head>
 <body>
 
 <header>
-  <h1>SnackMate Admin</h1>
-  <nav>
-    <button onclick="showSection('product')">Produk</button>
-    <button onclick="showSection('users')">List User</button>
-    <button onclick="showSection('apikey')">List API Key</button>
-    <button onclick="logout()">Logout</button>
-  </nav>
+    <h1>SnackMate Admin</h1>
+    <nav>
+        <button onclick="showSection('product')">Produk</button>
+        <button onclick="showSection('users')">List User</button>
+        <button onclick="showSection('apikey')">List API Key</button>
+        <button onclick="logout()">Logout</button>
+    </nav>
 </header>
 
 <div id="content"></div>
@@ -72,178 +43,199 @@
 const BASE = "http://localhost:3000";
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
+
+// State untuk membedakan Tambah atau Edit
+let currentEditId = null;
+
 if (!token || role !== "admin") window.location.href = "login.html";
 
 const content = document.getElementById("content");
 
-// ---- Section Switch ----
 function showSection(section){
-  if(section==='product') loadProductSection();
-  else if(section==='users') loadUserSection();
-  else if(section==='apikey') loadApiKeySection();
+    currentEditId = null; // Reset state setiap pindah section
+    if(section==='product') loadProductSection();
+    else if(section==='users') loadUserSection();
+    else if(section==='apikey') loadApiKeySection();
 }
 
-// ---- Logout ----
 function logout(){
-  localStorage.clear();
-  window.location.href="login.html";
+    localStorage.clear();
+    window.location.href="login.html";
 }
 
-// -------------------- PRODUK --------------------
+// -------------------- PRODUK SECTION --------------------
 async function loadProductSection(){
-  content.innerHTML=`
-    <h2>CRUD Produk</h2>
-    <div class="form-group">
-      <input type="text" id="prodName" placeholder="Nama Snack">
-      <input type="text" id="prodBrand" placeholder="Brand">
-      <input type="text" id="prodCountry" placeholder="Country">
-      <input type="text" id="prodDesc" placeholder="Deskripsi">
-      <input type="number" id="prodPrice" placeholder="Harga">
-      <input type="number" id="prodStock" placeholder="Stock">
-      <input type="text" id="prodImage" placeholder="Nama File Gambar">
-    </div>
-    <div id="imageGallery" class="grid"></div>
-    <button class="action" onclick="addProduct()">Tambah / Update Produk</button>
-    <h3>Daftar Snack</h3>
-    <div id="snackList" class="grid"></div>
-  `;
-  loadImages();
-  loadSnacks();
+    content.innerHTML=`
+        <h2 id="formTitle">Tambah Produk Baru</h2>
+        <div class="form-group">
+            <input type="text" id="prodName" placeholder="Nama Snack">
+            <input type="text" id="prodBrand" placeholder="Brand">
+            <input type="text" id="prodCountry" placeholder="Asal Negara">
+            <input type="text" id="prodDesc" placeholder="Deskripsi">
+            <input type="number" id="prodPrice" placeholder="Harga">
+            <input type="number" id="prodStock" placeholder="Stok">
+            <input type="text" id="prodImage" placeholder="Pilih gambar di bawah..." readonly>
+        </div>
+        <h4>Pilih Gambar:</h4>
+        <div id="imageGallery"></div>
+        
+        <div style="display:flex; gap:10px;">
+            <button id="btnSave" class="action" onclick="handleSave()" style="flex:2;">Simpan Produk</button>
+            <button id="btnCancel" class="action" onclick="loadProductSection()" style="background:#95a5a6; flex:1; display:none;">Batal</button>
+        </div>
+
+        <hr style="margin: 30px 0;">
+        <h3>Daftar Snack</h3>
+        <div id="snackList" class="grid-container"></div>
+    `;
+    loadImages();
+    loadSnacks();
 }
 
-// load gambar statis dari backend/public/images
 function loadImages(){
-  const images=["calbee-honeybutter.jpg","kitkat-matcha.jpg","pepero-almond.jpg","pocky-matcha.jpg","taokaenoi.jpg"];
-  const gallery=document.getElementById("imageGallery");
-  gallery.innerHTML="";
-  images.forEach(img=>{
-    const imgEl=document.createElement("img");
-    imgEl.src=`${BASE}/images/${img}`;
-    imgEl.title=img;
-    imgEl.onclick=()=>document.getElementById("prodImage").value=img;
-    gallery.appendChild(imgEl);
-  });
+    const images=["calbee-honeybutter.jpg","kitkat-matcha.jpg","pepero-almond.jpg","pocky-matcha.jpg","taokaenoi.jpg"];
+    const gallery=document.getElementById("imageGallery");
+    if(!gallery) return;
+    gallery.innerHTML="";
+    images.forEach(img=>{
+        const imgEl=document.createElement("img");
+        imgEl.src=`${BASE}/images/${img}`;
+        imgEl.onclick=()=>document.getElementById("prodImage").value=img;
+        gallery.appendChild(imgEl);
+    });
 }
 
-// Load Snack
 async function loadSnacks(){
-  try{
-    const res=await fetch(`${BASE}/admin/snacks`, {headers:{Authorization:`Bearer ${token}`}});
-    const data=await res.json();
-    const list=document.getElementById("snackList");
-    list.innerHTML="";
-    data.forEach(s=>{
-      const card=document.createElement("div");
-      card.className="card";
-      card.innerHTML=`
-        <img src="${BASE}/images/${s.image_url}" alt="${s.name}">
-        <h4>${s.name}</h4>
-        <p>Brand: ${s.brand||'-'}</p>
-        <p>Country: ${s.country||'-'}</p>
-        <p>${s.description}</p>
-        <p>Rp ${s.price}</p>
-        <p>Stock: ${s.stock}</p>
-        <button class="action" onclick="editProduct(${s.id})">Edit</button>
-        <button class="action" onclick="deleteProduct(${s.id})">Hapus</button>
-      `;
-      list.appendChild(card);
-    });
-  } catch(err){ console.error(err); alert("Gagal load snack"); }
-}
-
-// Add / Update Product
-async function addProduct(){
-  const name=document.getElementById("prodName").value;
-  const brand=document.getElementById("prodBrand").value;
-  const country=document.getElementById("prodCountry").value;
-  const desc=document.getElementById("prodDesc").value;
-  const price=document.getElementById("prodPrice").value;
-  const stock=document.getElementById("prodStock").value;
-  const image_url=document.getElementById("prodImage").value;
-
-  if(!name||!desc||!price||!image_url) return alert("Lengkapi field penting");
-
-  try{
-    await fetch(`${BASE}/admin/snacks`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
-      body:JSON.stringify({name,brand,country,description:desc,price,stock,image_url})
-    });
-    loadSnacks();
-    resetForm();
-  }catch(err){console.error(err); alert("Gagal tambah snack");}
-}
-
-function resetForm(){
-  ["prodName","prodBrand","prodCountry","prodDesc","prodPrice","prodStock","prodImage"].forEach(id=>document.getElementById(id).value="");
-  document.querySelector(".action").onclick=addProduct;
-}
-
-// Edit Product
-async function editProduct(id){
-  const res=await fetch(`${BASE}/admin/snacks/${id}`, {headers:{Authorization:`Bearer ${token}`}});
-  const s=await res.json();
-  document.getElementById("prodName").value=s.name;
-  document.getElementById("prodBrand").value=s.brand;
-  document.getElementById("prodCountry").value=s.country;
-  document.getElementById("prodDesc").value=s.description;
-  document.getElementById("prodPrice").value=s.price;
-  document.getElementById("prodStock").value=s.stock;
-  document.getElementById("prodImage").value=s.image_url;
-
-  document.querySelector(".action").onclick=async()=>{
     try{
-      await fetch(`${BASE}/admin/snacks/${id}`, {
-        method:"PUT",
-        headers:{"Content-Type":"application/json", Authorization:`Bearer ${token}`},
-        body:JSON.stringify({
-          name:document.getElementById("prodName").value,
-          brand:document.getElementById("prodBrand").value,
-          country:document.getElementById("prodCountry").value,
-          description:document.getElementById("prodDesc").value,
-          price:document.getElementById("prodPrice").value,
-          stock:document.getElementById("prodStock").value,
-          image_url:document.getElementById("prodImage").value
-        })
-      });
-      loadSnacks();
-      resetForm();
-    }catch(err){console.error(err); alert("Gagal update snack");}
-  }
+        const res = await fetch(`${BASE}/admin/snacks`, {headers:{Authorization:`Bearer ${token}`}});
+        const data = await res.json();
+        const list = document.getElementById("snackList");
+        if(!list) return;
+        list.innerHTML = "";
+        data.forEach(s => {
+            // Stringify data snack agar bisa diparsing ke fungsi edit
+            const snackData = JSON.stringify(s).replace(/'/g, "&apos;"); 
+            list.innerHTML += `
+                <div class="card">
+                    <img src="${BASE}/images/${s.image_url}" onerror="this.src='https://via.placeholder.com/150'">
+                    <h4>${s.name}</h4>
+                    <p style="font-size:0.9rem; color:#666;">${s.brand || '-'}</p>
+                    <p>Rp ${Number(s.price).toLocaleString()} | Stok: ${s.stock}</p>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="action" onclick='prepareEdit(${snackData})' style="background:#f39c12; flex:1; font-size:0.8rem;">Edit</button>
+                        <button class="action" onclick="deleteProduct(${s.id})" style="background:#888; flex:1; font-size:0.8rem;">Hapus</button>
+                    </div>
+                </div>`;
+        });
+    } catch(err){ console.error(err); }
 }
 
-// Delete Product
+// FUNGSI MENGISI FORM UNTUK EDIT
+function prepareEdit(s) {
+    currentEditId = s.id;
+    document.getElementById("formTitle").innerText = "Edit Produk: " + s.name;
+    document.getElementById("prodName").value = s.name;
+    document.getElementById("prodBrand").value = s.brand || "";
+    document.getElementById("prodCountry").value = s.country || "";
+    document.getElementById("prodDesc").value = s.description || "";
+    document.getElementById("prodPrice").value = s.price;
+    document.getElementById("prodStock").value = s.stock;
+    document.getElementById("prodImage").value = s.image_url;
+
+    // Ubah tampilan tombol
+    document.getElementById("btnSave").innerText = "Update Perubahan";
+    document.getElementById("btnSave").style.background = "#f39c12";
+    document.getElementById("btnCancel").style.display = "block";
+    
+    // Scroll ke atas agar admin tahu form sudah terisi
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// LOGIKA UNTUK MENENTUKAN POST ATAU PUT
+async function handleSave() {
+    const data = {
+        name: document.getElementById("prodName").value,
+        brand: document.getElementById("prodBrand").value,
+        country: document.getElementById("prodCountry").value,
+        description: document.getElementById("prodDesc").value,
+        price: document.getElementById("prodPrice").value,
+        stock: document.getElementById("prodStock").value,
+        image_url: document.getElementById("prodImage").value
+    };
+
+    if(!data.name || !data.image_url) return alert("Nama dan Gambar wajib diisi!");
+
+    const url = currentEditId ? `${BASE}/admin/snacks/${currentEditId}` : `${BASE}/admin/snacks`;
+    const method = currentEditId ? "PUT" : "POST";
+
+    try {
+        const res = await fetch(url, {
+            method: method,
+            headers: {"Content-Type":"application/json", Authorization:`Bearer ${token}`},
+            body: JSON.stringify(data)
+        });
+
+        if(res.ok) {
+            alert(currentEditId ? "Produk diupdate!" : "Produk ditambah!");
+            loadProductSection(); // Reset form dan list
+        } else {
+            const errData = await res.json();
+            alert("Error: " + errData.message);
+        }
+    } catch(err) { alert("Gagal memproses data"); }
+}
+
 async function deleteProduct(id){
-  if(!confirm("Yakin hapus snack ini?")) return;
-  try{
-    await fetch(`${BASE}/admin/snacks/${id}`, {method:"DELETE", headers:{Authorization:`Bearer ${token}`}});
-    loadSnacks();
-  }catch(err){console.error(err); alert("Gagal hapus snack");}
+    if(!confirm("Hapus produk ini secara permanen?")) return;
+    try {
+        const res = await fetch(`${BASE}/admin/snacks/${id}`, {
+            method:"DELETE", 
+            headers:{Authorization:`Bearer ${token}`}
+        });
+        if(res.ok) loadSnacks();
+    } catch(err) { alert("Gagal hapus"); }
 }
 
-// -------------------- USERS --------------------
+// -------------------- USERS & API KEYS SECTION --------------------
 async function loadUserSection(){
-  content.innerHTML=`<h2>List User</h2><div id="userList"></div>`;
-  try{
-    const res=await fetch(`${BASE}/admin/users`, {headers:{Authorization:`Bearer ${token}`}});
-    const users=await res.json();
-    document.getElementById("userList").innerHTML=users.map(u=>`<p>${u.email} (${u.role})</p>`).join("");
-  }catch(err){console.error(err); alert("Gagal load users");}
+    content.innerHTML = `<h2>Daftar User Terdaftar</h2><div id="userList" class="grid-container"></div>`;
+    try {
+        const res = await fetch(`${BASE}/admin/users`, { headers: { Authorization: `Bearer ${token}` } });
+        const users = await res.json();
+        const userList = document.getElementById("userList");
+        users.forEach(u => {
+            userList.innerHTML += `
+                <div class="card" style="background:#fefefe; text-align:left;">
+                    <p><strong>Email:</strong> ${u.email}</p>
+                    <p><strong>Role:</strong> ${u.role}</p>
+                    <p style="font-size:0.7rem; color:#aaa;">User ID: ${u.id}</p>
+                </div>`;
+        });
+    } catch(err) { alert("Gagal load users"); }
 }
 
-// -------------------- API KEYS --------------------
 async function loadApiKeySection(){
-  content.innerHTML=`<h2>List API Key</h2><div id="apiList"></div>`;
-  try{
-    const res=await fetch(`${BASE}/admin/apikeys`, {headers:{Authorization:`Bearer ${token}`}});
-    const keys=await res.json();
-    document.getElementById("apiList").innerHTML=keys.map(k=>`<p>${k.api_key} (${k.user_id})</p>`).join("");
-  }catch(err){console.error(err); alert("Gagal load API keys");}
+    content.innerHTML = `<h2>Monitoring API Key & Sisa Token</h2><div id="apiList" class="grid-container"></div>`;
+    try {
+        const res = await fetch(`${BASE}/admin/apikeys`, { headers: { Authorization: `Bearer ${token}` } });
+        const keys = await res.json();
+        const apiList = document.getElementById("apiList");
+        keys.forEach(k => {
+            const tokenCount = k.usage_limit || 0;
+            const badgeColor = tokenCount > 3 ? "#2ecc71" : "#e74c3c";
+            apiList.innerHTML += `
+                <div class="card api-card">
+                    <div class="token-badge" style="background:${badgeColor}">Sisa: ${tokenCount}</div>
+                    <h4 style="margin-top:0;">User ID: ${k.user_id}</h4>
+                    <p style="font-size:0.8rem; color:#555; margin-bottom:5px;">API Key:</p>
+                    <code style="background:#eee; padding:5px; border-radius:4px; font-size:0.75rem; display:block; word-break:break-all;">${k.api_key}</code>
+                    <p style="margin-top:10px; font-size:0.8rem;">Status: <strong>${tokenCount > 0 ? 'Aktif' : 'Limit Habis'}</strong></p>
+                </div>`;
+        });
+    } catch(err) { alert("Gagal load API keys"); }
 }
 
-// tampil awal section produk
 showSection('product');
 </script>
-
 </body>
 </html>
